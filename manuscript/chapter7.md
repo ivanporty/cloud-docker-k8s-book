@@ -138,9 +138,6 @@ time-service-77d9656579-xrg52   1/1     Running   0          11d
 
 На схеме это выглядит примерно так:
 
-
-
-![](/img/cloud/kube-proxy.svg)
 ![](/images/kube-proxy.svg)
 
 
@@ -180,8 +177,6 @@ public class WeekendService {
    private static Logger logger =
            LoggerFactory.getLogger(WeekendService.class);
 
-   private static AtomicBoolean ready = new AtomicBoolean(false);
-
    public static void main(String[] args) {
        port(5678);
 
@@ -200,7 +195,8 @@ public class WeekendService {
            // его в объект c данными
            TimeServiceResponse timeServiceResponse = gson.fromJson(
                    new InputStreamReader(
-                           URI.create("http://time-service:8080/nanotime").toURL().openStream()),
+                           URI.create("http://time-service:8080/nanotime").
+                                        toURL().openStream()),
                    TimeServiceResponse.class);
            // используем пакет java.time для получения данных о текущем дне
            Instant millisTime = Instant.ofEpochMilli(
@@ -211,25 +207,6 @@ public class WeekendService {
 
            return new TimeZoneReply(isWeekend, dayOfWeek.name());
        }, gson::toJson);
-
-       // поддержка сигнала о готовности сервиса к работе. Используем
-       // встроенный в библиотеку Spark
-       // метод для ожидания готовности сервера к работе, ожидая его в
-       // отдельном потоке Thread.
-       get("/ready", (req, res) -> {
-           if (ready.get()) {
-               logger.info("Запрос проверки готовности, сервер готов.");
-               return "Готов!";
-           } else {
-               logger.warn("Запрос проверки готовности, сервер не готов.");
-               throw new IllegalStateException("Не готов!");
-           }
-       });
-       // ожидаем готовности в параллельном потоке.
-       new Thread(() -> {
-           awaitInitialization();
-           ready.set(true);
-       }).start();
    }
 
    // стандартный класс с данными для преобразования результата сервиса в JSON
@@ -553,6 +530,7 @@ spec:
 ```
 
 Итак, проверка готовности описана в разделе `readinessProbe`. Сразу же идет тип проверки - у нас это будет запрос по адресу (`/ready`) и порту HTTP (`httpGet`). Можно отрегулировать проверку параметрами:
+
 * `periodSeconds`. Время в секундах между проведением очередной проверки. Проверка проводится регулярно и постоянно, чтобы быстро выявить не готовые контейнеры.
 * `initialDelaySeconds`. Задержка перед первым вызовом проверки, если мы точно знаем что сервис сразу готов не будет. Это полезно в нашем случае с Java.
 * `failureThreshold` и `successThreshold`. Количество попыток для объявления сервиса не готовым, и наоборот, готовым. Мы поставили везде 1 - одной удачной или неудачной попытки хватит для смены состояния сервиса. Можно менять эти параметры в зависимости от природы вашего микросервиса.
@@ -572,21 +550,24 @@ public static void main(String[] args) {
 
   …
 
-   // поддержка сигнала о готовности сервиса к работе. Используем встроенный в библиотеку Spark
-   // метод для ожидания готовности сервера к работе, ожидая его в отдельном потоке Thread.
-   get("/ready", (req, res) -> {
-       if (ready.get()) {
-           return "Готов!";
-       } else {
-           throw new IllegalStateException("Не готов!");
-       }
-   });
-   // ожидаем готовности в параллельном потоке.
-   new Thread(() -> {
-       awaitInitialization();
-       ready.set(true);
-   }).start();
-}
+       // поддержка сигнала о готовности сервиса к работе. Используем
+       // встроенный в библиотеку Spark
+       // метод для ожидания готовности сервера к работе, ожидая его в
+       // отдельном потоке Thread.
+       get("/ready", (req, res) -> {
+           if (ready.get()) {
+               logger.info("Запрос проверки готовности, сервер готов.");
+               return "Готов!";
+           } else {
+               logger.warn("Запрос проверки готовности, сервер не готов.");
+               throw new IllegalStateException("Не готов!");
+           }
+       });
+       // ожидаем готовности в параллельном потоке.
+       new Thread(() -> {
+           awaitInitialization();
+           ready.set(true);
+       }).start();
 
 ```
 
@@ -613,6 +594,8 @@ service "weekend-service" unchanged
 * Внутренняя реализация сервисов позволяет прозрачно работать с любым количеством экземпляров ваших микросервисов и включает в себя простые алгоритмы балансировки нагрузки. Для поиска экземпляров используются метки labels.
 * Кроме обычного адреса внутри кластера, вы также можете выбрать тип сервиса NodePort для собственного алгоритма балансировки нагрузки, или использовать встроенный балансировщик облачного кластера с помощью типа LoadBalancer.
 * Апробированной и рекомендованной практикой распределенных динамических систем является проверка готовности (readiness check) каждого работающего в кластере сервиса. Kubernetes предоставляет нам встроенную проверку готовности нескольких видов.
+
+
 
 
 
