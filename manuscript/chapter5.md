@@ -228,7 +228,7 @@ kubectl run time-service --image {ваша_учетная_запись_Docker}/t
 Наш микросервис для получения времени был запущен простой командой `kubectl run`, поэтому по умолчанию он работает в единственном экземпляре, в созданном для него отсеке. Посмотреть детали работающих на данный момент отсеков в кластере можно следующим образом:
 
 ```shell
-$ $ kubectl get pods -o wide
+$ kubectl get pods -o wide
 NAME                            READY     STATUS    RESTARTS   AGE       IP           NODE
 time-service-7c886f94bf-gwk4x   1/1       Running   0          6m        172.17.0.4   minikube
 ```
