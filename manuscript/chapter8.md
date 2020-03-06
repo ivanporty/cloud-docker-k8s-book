@@ -52,7 +52,7 @@ func serveTime(w http.ResponseWriter, r *http.Request) {
 
 По сути ничего не поменялось, только более привычный нам формат даты в методе `Format()`, которую мы отправляем при запросе ресурса `/time`, вместо чрезмерно неудобного результата функции `String()`. Все шаги по построение приложения и упаковке его в образ контейнера будут неизменны, мы изменим лишь версию, увеличив ее на следующую минимальную 0.2.0:
 
-```shell
+```console
 $ docker build . -t {ваша_учетная_запись_Docker}/time-service:0.2.0
 $ docker push {ваша_учетная_запись_Docker}/time-service:0.2.0
 
@@ -101,7 +101,7 @@ spec:
 
 Давайте развернем оба развертывания одновременно - конечно же, декларативно, просто указав директорию со всеми нашими объектами в YAML:
 
-```
+```console
 $ kubectl apply -f k8s/
 deployment.apps/time-service created
 service/time-service created
@@ -123,7 +123,7 @@ deployment.apps/time-service-canary created
 
 Проверить как это работает весьма просто - давайте запрашивать `time-service` в простом цикле, и вот что мы увидим:
 
-```shell
+```console
 $ while true; do curl localhost:[порт_NodePort]/time; sleep 1; done
 {"time":"2019-10-28 13:56:59.6738709 +0000 UTC m=+111.618738301"}
 {"time":"2019-10-28 13:57:00.7030272 +0000 UTC m=+112.647894601"}
@@ -245,7 +245,7 @@ spec:
 
 Обновим наш кластер, и сделаем стабильную, старую версию доступной только через “синие” метки (Внимание: при изменении меток развертывания данное развертывание сначала надо удалить, а только потом запустить заново!):
 
-```
+```console
 $ kubectl apply -f k8s/blue-green/blue/
 deployment.apps/time-service created
 service/time-service created
@@ -254,7 +254,7 @@ service/time-service created
 
 Теперь мы можем запустить обновленную “зеленую” версию развертывания, не опасаясь того, что к ней будут попадать реальные запросы:
 
-```
+```console
 $ kubectl apply -f k8s/blue-green/green/k8s-time-deploy-green.yaml 
 deployment.apps/time-service-green created
 
@@ -262,7 +262,7 @@ deployment.apps/time-service-green created
 
 Наш сервис теперь не будет обращать внимания на параллельно работающую “зеленую” версию, так как настроен на “синюю” версию:
 
-```
+```console
 $ while true; do curl localhost:[порт_NodePort]/time; sleep 1; done
 {"time":"2019-10-30 16:24:03.4171022 +0000 UTC m=+165.410751801"}
 {"time":"2019-10-30 16:24:04.4479167 +0000 UTC m=+166.441567201"}
@@ -297,7 +297,7 @@ spec:
 
 Торжественно (и немного волнуясь) переведем систему на “зеленую” версию:
 
-```
+```console
 $ kubectl apply -f k8s/blue-green/green/k8s-time-svc-green.yaml 
 service/time-service configured
 $ while true; do curl localhost:31297/time; sleep 1; done
@@ -310,7 +310,7 @@ $ while true; do curl localhost:31297/time; sleep 1; done
 
 Еще не время удалять “синюю” версию! В случае непредвиденных проблем и краха “зеленой” версии мы можем мгновенно откатиться на старую версию - ведь “синии” отсеки все еще работают в кластере:
 
-```
+```console
 $ kubectl apply -f k8s/blue-green/blue/k8s-time-svc-blue.yaml 
 service/time-service configured
 $ while true; do curl localhost:31297/time; sleep 1; done
@@ -333,7 +333,7 @@ $ while true; do curl localhost:31297/time; sleep 1; done
 
 Метки можно задавать и удалять не только в декларациях объектов YAML, но и вручную, с помощью команды `kubectl label`. Казалось бы, это путь в никуда, ручное императивное управление объектами, как мы помним, через какое-то время приведет к системе, состояние которой было достигнуто потерянными и забытыми командами. Но в некоторых случаях это может быть очень полезно. Посмотрим на список отсеков pods развертывания `time-service`, у которых есть метки `app`, основная метка, по которой их выбирает сервис:
 
-```
+```console
 $ kubectl get pods --selector app=time-service
 NAME                                   READY   STATUS    RESTARTS   AGE
 time-service-564b4d479f-tjgx7          1/1     Running   0          22h
@@ -343,7 +343,7 @@ time-service-green-5c4497bbf9-m59sx    1/1     Running   0          22h
 
 Как мы видим, можно указать селектор для команды `kubectl` вручную. Мы видим три отсека для текущего развертывания, “канареечного” и “зеленого”. Представим, что наше “канареечное” развертывание работает в нескольких экземплярах, и что-то пошло не так. Нам хотелось бы взять текущий экземпляр сервиса и контейнера `time-service`, но все они обслуживают реальные запросы. Нестандартное решение - убрать основную метку селектора отсека! Развертывание `Deployment` “потеряет” этот экземпляр микросервиса и запустит новый отсек, а сервис перестанет направлять к нему запросы.
 
-```
+```console
 $ kubectl label pod time-service-canary-54ccf7c869-s8snk debug=true app-
 pod/time-service-canary-54ccf7c869-s8snk labeled
 
@@ -353,7 +353,7 @@ pod/time-service-canary-54ccf7c869-s8snk labeled
 
 Посмотрим, как управляющий цикл исправит потерю отсека:
 
-```
+```console
 $ kubectl get pods --selector app=time-service
 NAME                                   READY   STATUS    RESTARTS   AGE
 time-service-564b4d479f-tjgx7          1/1     Running   0          22h
@@ -366,7 +366,7 @@ time-service-green-5c4497bbf9-m59sx    1/1     Running   0          22h
 
 А мы получили желаемый экземпляр прежде рабочего микросервиса в свое распоряжение, и можем изучить его состояние и понять, в чем может быть проблема:
 
-```
+```console
 $ kubectl get pods --selector debug=true,release=canary
 NAME                                   READY   STATUS    RESTARTS   AGE
 time-service-canary-54ccf7c869-s8snk   1/1     Running   0          3d
