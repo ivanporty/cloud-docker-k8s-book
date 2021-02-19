@@ -1,2 +1,3 @@
-# cloud-docs
-Various documentation on Cloud development
+# Исходный текст книги "Программирование Cloud Native. Микросервисы, Docker и Kubernetes"
+Этот репозиторий используется для генерации конечных версий книги во всех форматах.
+Исправления приветствуются!
