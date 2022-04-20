@@ -26,10 +26,10 @@ $ kubectl run -i --tty busybox --image=busybox --restart=Never -- sh
 
 ```console
 $ nslookup time-service
-Server:		10.15.240.10
-Address:	10.15.240.10:53
+Server:   10.15.240.10
+Address:  10.15.240.10:53
 
-Name:	time-service.default.svc.cluster.local
+Name: time-service.default.svc.cluster.local
 Address: 10.15.251.13
 
 ```
@@ -311,8 +311,8 @@ $ ./gradlew build
 Создадим образ контейнера, применив технику многоступенчатой сборки, рассмотренную нами в разделе о сборке образов image:
 
 ```Dockerfile
-# Первая ступень на основе стандартного образа Gradle
-FROM gradle:jdk11 as builder
+# Первая ступень на основе стандартного образа Gradle (версия 6.9)
+FROM gradle:6.9-jdk11 as builder
 
 # Директория для файлов проекта
 WORKDIR weekend-service/
@@ -340,11 +340,9 @@ CMD ["java", "-jar", "/weekend-service/weekend-service-0.1.0-SNAPSHOT.jar"]
 
 ```
 
-
 Детали сборки нашего образа указаны в комментариях в файле `Dockerfile`, и нам уже хорошо знакомы. Для получения чистой сборки мы собираем приложение полностью заново внутри процесса сборки самого образа контейнера. Первая ступень основана на стандартном образе Gradle и JDK 11. Заметьте, версия Gradle зафиксирована - мы используем 6.9. Это очень интересный пример предотвращения возможных ошибок - если бы выбрали образ `latest` без версии Gradle, мы автоматически перешли бы в какой-то момент на новую версию Gradle 7, в которой некоторые конструкции прежнего Gradle 6 перестали поддерживаться, и сломали бы нашу сборку. Автоматическое обновление версий требует постоянной поддержки!
 
 Мы копируем только файл сборки и исходный код, и тем самым гарантируем новую сборку, не зависящую от состояния библиотек и зависимостей на локальной машине. Полученный архив копируется во вторую ступень, оптимизированную версию (`slim`) JRE версии 11 (на момент написания версии Java 11 для Linux Alpine еще не было, обычно это самый компактный по размеру вариант). При запуске контейнера мы просто вызовем свой метод основной класс и его метод `main()`, записанный в манифесте архива JAR. 
-
 
 Если ваш файл сборки и исходный текст не меняется, то сборка образа будет медленной только в первый раз - в последующие разы сработает кэш. Но, без сомнения, в коде будет много изменений, и для написанного нами `Dockerfile` это означает скачивание всех зависимостей из репозитория Maven Central вновь и вновь при каждой сборке, и только потом идет компиляция кода - это будет занимать немалое время при каждой попытке собрать обновленное приложение. 
 
@@ -416,12 +414,12 @@ $ curl 0.0.0.0:5678/weekend/Europe/Moscow
 [qtp1759478938-19] INFO com.porty.k8s.WeekendService - Запрошен статус выходного дня для зоны Europe/Moscow
 [qtp1759478938-19] ERROR spark.http.matching.GeneralError - 
 java.net.UnknownHostException: time-service
-	at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:184)
-	at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
-	at java.net.Socket.connect(Socket.java:589)
-	at java.net.Socket.connect(Socket.java:538)
-	at sun.net.NetworkClient.doConnect(NetworkClient.java:180)
-	at sun.net.www.http.HttpClient.openServer(HttpClient.java:463)
+  at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:184)
+  at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
+  at java.net.Socket.connect(Socket.java:589)
+  at java.net.Socket.connect(Socket.java:538)
+  at sun.net.NetworkClient.doConnect(NetworkClient.java:180)
+  at sun.net.www.http.HttpClient.openServer(HttpClient.java:463)
            ...
 ```
 
@@ -568,7 +566,7 @@ spec:
    spec:
      containers:
        name: weekend-service
-       # секция проверки готовности
+      # секция проверки готовности
        - readinessProbe:
             # проверка готовности с помощью запроса HTTP
             httpGet:
@@ -648,8 +646,3 @@ service "weekend-service" unchanged
 * Внутренняя реализация сервисов позволяет прозрачно работать с любым количеством экземпляров ваших микросервисов и включает в себя простые алгоритмы балансировки нагрузки. Для поиска экземпляров используются метки labels.
 * Кроме обычного адреса внутри кластера, вы также можете выбрать тип сервиса NodePort для собственного алгоритма балансировки нагрузки, или использовать встроенный балансировщик облачного кластера с помощью типа LoadBalancer.
 * Апробированной и рекомендованной практикой распределенных динамических систем является проверка готовности (readiness check) каждого работающего в кластере сервиса. Kubernetes предоставляет нам встроенную проверку готовности нескольких видов.
-
-
-
-
-
