@@ -217,7 +217,7 @@ Spring Initializr помог автоматически указать все н
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<project ...
+<project>
 
 <artifactId>hello-world</artifactId>
   <packaging>jar</packaging>
@@ -715,9 +715,9 @@ Java в некотором роде выделяется среди других
 
 ```console
 # не забудьте восстановить Dockerfile из исходников GitHub
-cd dockerfile/java-hello
-rm Dockerfile*
-pack build java-hello-pack
+$ cd dockerfile/java-hello
+$ rm Dockerfile*
+$ pack build java-hello-pack
 …
 Suggested builders:
 Google..
@@ -728,7 +728,7 @@ Paketo..
 Мы вызвали команду `pack build [имя образа]`, однако остался еще один шаг - выбрать, какой именно build pack будет использован. Cloud Native Buildpacks - это стандарт, описывающий процесс создания образов из исходного кода, и у него есть несколько реализаций - как мы видим, доступны реализации от Google, Heroku, или Paketo. Используем сборку Google (флаг `--builder`):
 
 ```console
-pack build java-hello-pack --builder gcr.io/buildpacks/builder:v1
+$ pack build java-hello-pack --builder gcr.io/buildpacks/builder:v1
 v1: Pulling from buildpacks/builder
 …
 ===> ANALYZING
