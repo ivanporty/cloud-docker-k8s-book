@@ -254,14 +254,18 @@ $ kubectl config view
 apiVersion: v1
 clusters:
 - cluster:
-  …
-  name: docker-desktop
+    certificate-authority-data: DATA+OMITTED
+    server: https://kubernetes.docker.internal:6443
+  name: docker-desktop 
 contexts:
 - context:
     cluster: docker-desktop
     user: docker-desktop
   name: docker-desktop
 current-context: docker-desktop
+users:
+- name: docker-desktop
+  user:
 
 …
 
