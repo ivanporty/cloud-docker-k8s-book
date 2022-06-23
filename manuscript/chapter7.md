@@ -194,87 +194,92 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static spark.Spark.*;
 
 /**
-* Простой сервис на основе Spark/Java, запрашивающий время у микросервиса
-* time-service и возвращающий результат — выходной ли день в указанной
-* временной зоне и какой именно это выходной
-*/
+ * Простой сервис на основе Spark/Java, запрашивающий время у микросервиса time-service и
+ * возвращающий результат - выходной ли день в указанной временной зоне, и какой именно это
+ * выходной.
+ */
 public class WeekendService {
-   private static Logger logger =
-           LoggerFactory.getLogger(WeekendService.class);
 
-   public static void main(String[] args) {
-       port(5678);
+  private static Logger logger =
+      LoggerFactory.getLogger(WeekendService.class);
 
-       Gson gson = new Gson();
+  private static AtomicBoolean ready = new AtomicBoolean(false);
 
-       // страна и город для выяснения выходного дня кодируется прямо в пути
-       // запроса HTTP
-       // пример: /weekend/Europe/Moscow
-       get("/weekend/:country/:city", (req, res) -> {
-           ZoneId timeZoneId =
-                   ZoneId.of(req.params("country") + "/" + req.params("city"));
-           logger.info("Запрошен статус выходного дня для зоны {}",
-                   timeZoneId);
+  public static void main(String[] args) {
+    port(5678);
 
-           // запрашиваем время от вспомогательного сервиса и преобразуем
-           // его в объект c данными
-           TimeServiceResponse timeServiceResponse = gson.fromJson(
-                   new InputStreamReader(
-                           URI.create("http://time-service:8080/nanotime").
-                                        toURL().openStream()),
-                   TimeServiceResponse.class);
-           // используем пакет java.time для получения данных о текущем дне
-           Instant millisTime = Instant.ofEpochMilli(
-                   Long.parseLong(timeServiceResponse.getNanoTime()) / 1000000);
-           DayOfWeek dayOfWeek = millisTime.atZone(timeZoneId).getDayOfWeek();
-           boolean isWeekend = EnumSet.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
-                   .contains(dayOfWeek);
+    Gson gson = new Gson();
 
-           return new TimeZoneReply(isWeekend, dayOfWeek.name());
-       }, gson::toJson);
-   }
+    // страна и город для выяснения выходного дня кодируется прямо в пути
+    // запроса HTTP
+    // пример: /weekend/Europe/Moscow
+    get("/weekend/:country/:city", (req, res) -> {
+      ZoneId timeZoneId =
+          ZoneId.of(req.params("country") + "/" + req.params("city"));
+      logger.info("Запрошен статус выходного дня для зоны {}",
+          timeZoneId);
 
-   // стандартный класс с данными для преобразования результата сервиса в JSON
-   static class TimeZoneReply {
-       private boolean weekend;
-       private String day;
+      // запрашиваем время от вспомогательного сервиса и преобразуем
+      // его в объект c данными
+      TimeServiceResponse timeServiceResponse = gson.fromJson(
+          new InputStreamReader(
+              URI.create("http://time-service:8080/nanotime").
+                  toURL().openStream()),
+          TimeServiceResponse.class);
+      // используем пакет java.time для получения данных о текущем дне
+      Instant millisTime = Instant.ofEpochMilli(
+          Long.parseLong(timeServiceResponse.getNanoTime()) / 1000000);
+      DayOfWeek dayOfWeek = millisTime.atZone(timeZoneId).getDayOfWeek();
+      boolean isWeekend = EnumSet.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
+          .contains(dayOfWeek);
 
-       TimeZoneReply(boolean weekend, String day) {
-           this.weekend = weekend;
-           this.day = day;
-       }
+      return new TimeZoneReply(isWeekend, dayOfWeek.name());
+    }, gson::toJson);
+  }
 
-       public boolean isWeekend() {
-           return weekend;
-       }
+  // стандартный класс с данными для преобразования результата сервиса в JSON
+  static class TimeZoneReply {
 
-       public String getDay() {
-           return day;
-       }
-   }
+    private boolean weekend;
+    private String day;
 
-   // стандартный класс с данными для получения данных JSON от сервиса
-   // time-service
-   static class TimeServiceResponse {
-       private String time;
-       private String nanoTime;
+    TimeZoneReply(boolean weekend, String day) {
+      this.weekend = weekend;
+      this.day = day;
+    }
 
-       public String getTime() {
-           return time;
-       }
+    public boolean isWeekend() {
+      return weekend;
+    }
 
-       public void setTime(String time) {
-           this.time = time;
-       }
+    public String getDay() {
+      return day;
+    }
+  }
 
-       public String getNanoTime() {
-           return nanoTime;
-       }
+  // стандартный класс с данными для получения данных JSON от сервиса
+  // time-service
+  static class TimeServiceResponse {
 
-       public void setNanoTime(String nanoTime) {
-           this.nanoTime = nanoTime;
-       }
-   }
+    private String time;
+    private String nanoTime;
+
+    public String getTime() {
+      return time;
+    }
+
+    public void setTime(String time) {
+      this.time = time;
+    }
+
+    public String getNanoTime() {
+      return nanoTime;
+    }
+
+    public void setNanoTime(String nanoTime) {
+      this.nanoTime = nanoTime;
+    }
+  }
 }
 ```
 

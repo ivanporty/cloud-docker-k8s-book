@@ -1,0 +1,9 @@
+Ridero_Code_Snippets_Settings
+https://codeimg.io/
+650-700 canvas width
+padding: 0
+background: transparent
+theme: duotone-light
+Font size: 14-15
+Line numbers off
+No window decorations
