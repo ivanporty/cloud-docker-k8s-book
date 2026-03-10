@@ -575,7 +575,7 @@ CMD ["java", "-jar", "/app/hello-world-1.0.0.jar"]
 $ docker build . -f Dockerfile-multistage -t java-hello
 …
 $ docker images | grep java-hello
-go-hello                             latest   218MB
+java-hello                             latest   218MB
 
 ```
 
